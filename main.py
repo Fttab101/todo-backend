@@ -1,9 +1,9 @@
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
-from sqlalchemy.orm import declarative_base, sessionmaker, Session, Depends
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from geoalchemy2 import Geometry
 from typing import List, Optional
 

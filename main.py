@@ -1,4 +1,3 @@
-"postgresql://tododb_hjet_user:3EgV7WjpZyzPZXnCbquoHqOuRugHlreD@dpg-d0c8ht9r0fns73e5r1d0-a:5432/tododb_hjet"
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +20,7 @@ app.add_middleware(
 )
 
 # Configurar base de datos
-DATABASE_URL = "postgresql://tododb_hjet_user:3EgV7WjpZyzPZXnCbquoHqOuRugHlreD@dpg-d0c8ht9r0fns73e5r1d0-a:5432/tododb_hjet"
+DATABASE_URL = "postgresql://tododb_hjet_user:3EgV7WjpZyzPZXnCbquoHqOuRugHlreD@dpg-d0c8ht9r0fns73e5r1d0-a.frankfurt-postgres.render.com/tododb_hjet"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()

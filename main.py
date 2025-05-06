@@ -1,3 +1,5 @@
+"postgresql://tododb_hjet_user:3EgV7WjpZyzPZXnCbquoHqOuRugHlreD@dpg-d0c8ht9r0fns73e5r1d0-a:5432/tododb_hjet"
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,29 +9,42 @@ from geoalchemy2 import Geometry
 from typing import List
 
 app = FastAPI()
-origins = ["http://localhost:5173"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+# Configurar CORS
+origins = ["http://localhost:5173"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Configurar base de datos
 DATABASE_URL = "postgresql://tododb_hjet_user:3EgV7WjpZyzPZXnCbquoHqOuRugHlreD@dpg-d0c8ht9r0fns73e5r1d0-a:5432/tododb_hjet"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
+# Modelo de la base de datos
 class TaskDB(Base):
     __tablename__ = "tasks"
     id = Column(Integer, primary_key=True)
     title = Column(String)
     completed = Column(Boolean, default=False)
-    location = Column(Geometry('POINT'))
+    location = Column(Geometry('POINT'))  # Punto geoespacial (lat, lng)
 
+# Crear la tabla
 Base.metadata.create_all(engine)
 
+# Modelo para la API
 class Task(BaseModel):
     id: int
     title: str
     completed: bool
-    location: dict
+    location: dict  # {lat: float, lng: float}
 
+# Endpoint para obtener todas las tareas
 @app.get("/tasks", response_model=List[Task])
 async def get_tasks():
     db = SessionLocal()
@@ -49,6 +64,7 @@ async def get_tasks():
     db.close()
     return result
 
+# Endpoint para añadir una nueva tarea
 @app.post("/tasks", response_model=Task)
 async def create_task(task: Task):
     db = SessionLocal()

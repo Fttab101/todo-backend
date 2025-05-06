@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from geoalchemy2 import Geometry
+from geoalchemy2.functions import ST_X, ST_Y
 from typing import List, Optional
 
 app = FastAPI()
@@ -25,6 +26,14 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
+# Crear la tabla
+Base.metadata.create_all(engine)
+
+#Modelo para point
+class Location(BaseModel):
+    lat: float
+    lng: float   
+    
 # Modelo de la base de datos
 class TaskDB(Base):
     __tablename__ = "tasks"
@@ -32,15 +41,6 @@ class TaskDB(Base):
     title = Column(String)
     completed = Column(Boolean, default=False)
     location = Column(Geometry('POINT'))  # Punto geoespacial (lat, lng)
-
-# Crear la tabla
-Base.metadata.create_all(engine)
-
-
-#Modelo para point
-class Location(BaseModel):
-    lat: float
-    lng: float   
 
 # Modelo para la API
 class Task(BaseModel):
@@ -59,12 +59,10 @@ def get_db():
 
 # Endpoint para obtener todas las tareas
 @app.get("/tasks", response_model=List[Task])
-async def get_tasks():
-    db = SessionLocal()
+async def get_tasks(db: Session = Depends(get_db)):
     tasks = db.query(TaskDB).all()
     result = [
         {
-            "id": task.id,
             "title": task.title,
             "completed": task.completed,
             "location": {
@@ -74,7 +72,6 @@ async def get_tasks():
         }
         for task in tasks
     ]
-    db.close()
     return result
 
 # Endpoint para añadir una nueva tarea

@@ -28,7 +28,7 @@ Base = declarative_base()
 # Modelo de la base de datos
 class TaskDB(Base):
     __tablename__ = "tasks"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String)
     completed = Column(Boolean, default=False)
     location = Column(Geometry('POINT'))  # Punto geoespacial (lat, lng)
@@ -38,10 +38,9 @@ Base.metadata.create_all(engine)
 
 # Modelo para la API
 class Task(BaseModel):
-    id: int
     title: str
     completed: bool
-    location: dict  # {lat: float, lng: float}
+    location: Optional[dict] = None  # {lat: float, lng: float}
 
 # Endpoint para obtener todas las tareas
 @app.get("/tasks", response_model=List[Task])
@@ -65,18 +64,14 @@ async def get_tasks():
 
 # Endpoint para añadir una nueva tarea
 @app.post("/tasks", response_model=Task)
-async def create_task(task: Task):
-    db = SessionLocal()
-    location_wkt = f"POINT({task.location['lng']} {task.location['lat']})" if task.location else None
-    db_task = TaskDB(id=task.id, title=task.title, completed=task.completed, location=location_wkt)
+async def create_task(task: Task, db: Session = Depends(get_db)):
+    db_task = TaskDB(title=task.title, completed=task.completed, location=f"POINT({task.location['lng']} {task.location['lat']})")
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
-    response = {
+    return {
         "id": db_task.id,
         "title": db_task.title,
         "completed": db_task.completed,
-        "location": task.location
+        "location": {"lat": float(db_task.location.y), "lng": float(db_task.location.x)}
     }
-    db.close()
-    return response

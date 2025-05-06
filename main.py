@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Boolean
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, Session, Depends
 from geoalchemy2 import Geometry
-from typing import List
+from typing import List, Optional
 
 app = FastAPI()
 
@@ -36,11 +36,26 @@ class TaskDB(Base):
 # Crear la tabla
 Base.metadata.create_all(engine)
 
+
+#Modelo para point
+class Location(BaseModel):
+    lat: float
+    lng: float   
+
 # Modelo para la API
 class Task(BaseModel):
     title: str
     completed: bool
-    location: Optional[dict] = None  # {lat: float, lng: float}
+    location: Optional[Location] = None  # {lat: float, lng: float}
+ 
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Endpoint para obtener todas las tareas
 @app.get("/tasks", response_model=List[Task])
@@ -65,13 +80,18 @@ async def get_tasks():
 # Endpoint para añadir una nueva tarea
 @app.post("/tasks", response_model=Task)
 async def create_task(task: Task, db: Session = Depends(get_db)):
-    db_task = TaskDB(title=task.title, completed=task.completed, location=f"POINT({task.location['lng']} {task.location['lat']})")
+    location_wkt = f"POINT({task.location.lng} {task.location.lat})" if task.location else None
+    db_task = TaskDB(title=task.title, completed=task.completed, location=location_wkt)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+    location_dict = (
+        {"lat": float(db_task.location.y), "lng": float(db_task.location.x)}
+        if db_task.location
+        else None
+    )
     return {
-        "id": db_task.id,
         "title": db_task.title,
         "completed": db_task.completed,
-        "location": {"lat": float(db_task.location.y), "lng": float(db_task.location.x)}
+        "location": location_dict
     }

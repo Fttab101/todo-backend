@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+#DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL").strip('"')  # Elimina comillas
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL no está definida en .env")

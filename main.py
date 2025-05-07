@@ -15,7 +15,7 @@ app = FastAPI()
 app.include_router(tasks.router)
 
 # Configurar CORS
-origins = ["http://localhost:3000", "https://your-frontend.onrender.com"]
+origins = ["http://localhost:5173", "https://todo-frontend.onrender.com"],
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

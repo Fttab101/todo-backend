@@ -22,4 +22,6 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
+    allow_origin_regex=None,  # Asegura que no haya conflictos
+    expose_headers=["*"],
+    )
